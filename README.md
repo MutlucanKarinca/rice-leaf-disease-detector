@@ -2,6 +2,10 @@
 
 An AI-powered web application that detects diseases in rice plant leaves using deep learning.
 
+## Live Demo
+
+You can access the live demo of the application at [Rice Leaf Disease Detector](https://rice-leaf-disease-detector.onrender.com).
+
 ## Features
 
 - Real-time disease detection
@@ -31,6 +35,9 @@ rice-leaf-disease-detector/
 │   │   └── styles.css
 │   ├── js/
 │   │   └── scripts.js
+├── screenshots/
+│   ├── home_page.png
+│   └── analysis_result.png
 ├── app.py
 ├── requirements.txt
 └── README.md
@@ -96,6 +103,11 @@ The deep learning model is trained to detect diseases in rice plant leaves. It u
 ![Home Page](screenshots/home_page.png)
 ![Analysis Result](screenshots/analysis_result.png)
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ## Authors
 
 MutlucanKarinca
+
