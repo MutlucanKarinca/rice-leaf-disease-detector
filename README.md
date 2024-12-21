@@ -47,7 +47,7 @@ rice-leaf-disease-detector/
 
 1. Clone the repository
 ```bash
-git clone [Click here to visit the rice leaf disease detector repository](https://github.com/MutlucanKarinca/rice-leaf-disease-detector)
+git clone https://github.com/MutlucanKarinca/rice-leaf-disease-detector
 cd rice-leaf-disease-detector
 ```
 
