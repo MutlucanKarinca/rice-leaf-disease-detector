@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaf Disease Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            padding: 32px;
+            width: 480px;
+            max-width: 95%;
+        }
+
+        h1 {
+            color: #0f172a;
+            font-size: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .upload-area {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+
+        .upload-area.drag-over {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+            transform: scale(1.02);
+        }
+
+        .upload-area p {
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        .analyze-button {
+            background: #3b82f6;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .analyze-button:hover {
+            background: #2563eb;
+        }
+
+        .analyze-button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .result-container {
+            margin-top: 24px;
+        }
+
+        .uploaded-image {
+            width: 100%;
+            max-height: 240px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .prediction-box {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .prediction-box h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .prediction-box p {
+            color: #475569;
+            font-size: 14px;
+            margin: 4px 0;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            margin: 20px auto;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+
+        .result-animation {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .reset-button {
+            margin-top: 16px;
+            background: #94a3b8;
+            opacity: 0.8;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rice Leaf Disease Analysis</h1>
+        <div class="upload-area" id="drop-zone">
+            <p>Drag and drop a rice leaf image or click to select</p>
+            <small style="display: block; margin-top: 8px; color: #94a3b8;">
+                Note: Please ensure you upload a clear image of a rice plant leaf
+            </small>
+            <input type="file" id="input-data" accept="image/*" style="display: none;" required />
+        </div>
+        <button id="analyze-button" class="analyze-button" style="display: none;">Analyze</button>
+        
+        <div class="result-container">
+            <div class="spinner" id="loading-spinner" style="display: none;"></div>
+            <img id="uploaded-image" class="uploaded-image" src="" alt="" style="display: none;" />
+            <div class="prediction-box" id="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('input-data');
+        const analyzeButton = document.getElementById('analyze-button');
+
+        // File selection
+        fileInput.addEventListener('change', function(e) {
+            if (this.files[0]) {
+                dropZone.querySelector('p').textContent = `Selected file: ${this.files[0].name}`;
+                analyzeButton.style.display = 'block';
+            } else {
+                dropZone.querySelector('p').textContent = 'Drag and drop an image or click to select';
+                analyzeButton.style.display = 'none';
+            }
+        });
+
+        // Analyze button click
+        analyzeButton.addEventListener('click', async function() {
+            const spinner = document.getElementById('loading-spinner');
+            const resultDiv = document.getElementById('result');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Please select an image');
+                return;
+            }
+
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                showError('Only JPG and PNG files are accepted');
+                return;
+            }
+
+            spinner.style.display = 'block';
+            resultDiv.style.display = 'none';
+            analyzeButton.disabled = true;
+
+            // Show image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('uploaded-image');
+                img.src = e.target.result;
+                img.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const confidence = result.confidence;
+                    const color = result.prediction === 'Healthy' ? '#27ae60' : '#e74c3c';
+
+                    resultDiv.innerHTML = `
+                        <div class="result-animation">
+                            <h3 style="color: ${color}">Result</h3>
+                            <p style="font-weight: 500">Status: ${result.prediction}</p>
+                            <p>Confidence: ${confidence}%</p>
+                        </div>
+                    `;
+                    resultDiv.style.display = 'block';
+                } else {
+                    showError(result.error || 'Analysis failed');
+                }
+            } catch (error) {
+                showError('Network or server error. Please try again.');
+            } finally {
+                spinner.style.display = 'none';
+                analyzeButton.disabled = false;
+            }
+        });
+
+        // Drag & Drop operations
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            fileInput.files = e.dataTransfer.files;
+            if (e.dataTransfer.files[0]) {
+                dropZone.querySelector('p').textContent = `Selected file: ${e.dataTransfer.files[0].name}`;
+                analyzeButton.style.display = 'block';
+            }
+        });
+
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="error">${message}</div>`;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
